@@ -1,8 +1,11 @@
 lath
 lathlua
+
+.cache/
+
+*.o
 *.zip
 *.bin
 *.tar.gz
 *.tar.xz
 *.tar.bz2
-recipes
