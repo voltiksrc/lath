@@ -1,11 +1,98 @@
+#include <curl/curl.h>
+#include <fstream>
 #include <iostream>
+#include <lua5.3/lua.hpp>
 #include <string>
 #include <vector>
 
 using std::string;
 using std::vector;
 
-// just doing print functions for now
+struct Package {
+  string name;
+  string version;
+  string source;
+};
+Package load_recipe(const string &path) {
+  lua_State *L = luaL_newstate();
+
+  if (!L) {
+    std::cerr << "Failed to create Lua state\n";
+    return {};
+  }
+
+  luaL_openlibs(L);
+
+  int result = luaL_dofile(L, path.c_str());
+
+  if (result != LUA_OK) {
+    std::cerr << "Lua error: " << lua_tostring(L, -1) << '\n';
+    lua_close(L);
+    return {};
+  }
+  lua_getglobal(L, "pkg");
+  lua_getfield(L, -1, "name");
+  Package package;
+  package.name = lua_tostring(L, -1);
+  lua_pop(L, 1);
+  lua_getfield(L, -1, "version");
+  package.version = lua_tostring(L, -1);
+  lua_pop(L, 1);
+  lua_getfield(L, -1, "source");
+  package.source = lua_tostring(L, -1);
+  lua_pop(L, 1);
+  lua_close(L);
+  return package;
+}
+
+// libcurl data writing function
+size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
+  size_t total = size * nmemb;
+
+  auto *file = static_cast<std::ofstream *>(userdata);
+
+  file->write(ptr, total);
+
+  return total;
+}
+
+void download_source(const string &source_url) {
+  CURL *curl = curl_easy_init();
+  auto pos = source_url.find_last_of('/');
+  string filename = source_url.substr(pos + 1);
+
+  string output_path = ".cache/" + filename;
+  auto query_pos = filename.find('?');
+  if (query_pos != std::string::npos) {
+    filename = filename.substr(0, query_pos);
+  }
+
+  if (curl == nullptr) {
+    std::cerr << "Failed to initalize curl\n";
+    return;
+  }
+
+  std::ofstream file(output_path, std::ios::binary);
+  if (!file) {
+    std::cerr << "Failed to open output file\n";
+    curl_easy_cleanup(curl);
+    return;
+  }
+
+  curl_easy_setopt(curl, CURLOPT_URL, source_url.c_str());
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+  CURLcode result = curl_easy_perform(curl);
+  std::cout << '\n';
+  if (result != CURLE_OK) {
+    std::cerr << curl_easy_strerror(result) << '\n';
+  }
+
+  curl_easy_cleanup(curl);
+}
+
 void lath_version() {
   double version{0.1};
   std::cout << "lath " << version << '\n';
@@ -34,21 +121,13 @@ void search_package(std::vector<string> packages, std::string package) {
     std::cout << "Package not found.\n";
   }
 }
-void install_package(vector<string> &installed_packages, std::string package) {
-  std::cout << "Installing " << package << "..." << '\n';
-  bool installed = false;
-  for (string installed_pkgs : installed_packages) {
-    if (installed_pkgs == package) {
-      installed = true;
-      break;
-    }
-  }
-  if (installed == true) {
-    std::cout << "Package already installed!\n";
-  } else if (installed == false) {
-    installed_packages.push_back(package);
-    std::cout << package << " installed!\n";
-  }
+// main installation function
+void install_package(const string &recipe_path) {
+  Package pkg = load_recipe(recipe_path);
+
+  std::cout << "Installing " << pkg.name << '\n';
+  std::cout << "Version: " << pkg.version << '\n';
+  download_source(pkg.source);
 }
 void remove_package(std::string package) {
   std::cout << "Removing " << package << "..." << '\n';
@@ -58,9 +137,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Please enter a command and 'optionally' a package.\n";
     return 1;
   }
-  // vectors make me wanna die >:(
-  vector<string> packages{"tree", "github", "discord", "prismlauncher"};
-  vector<string> installed_packages;
+
   string command = argv[1];
   // command line interaction
   if (command == "--help") {
@@ -75,11 +152,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   string package = argv[2];
+  string recipe_path = "recipes/" + package + "/package.lua";
   // command checks for validation
   if (command == "get") {
-    install_package(installed_packages, package);
+    install_package(recipe_path);
   } else if (command == "search") {
-    search_package(packages, package);
+    // search_package(package);
   } else if (command == "rm") {
     remove_package(package);
   } else {

@@ -1,10 +1,12 @@
 # Development
 I am the sole developer of Lath, if u would like to help with things
-such as: recipe making, feature implementing, etc. Please contact me: @voltiksrc@gmail.com
+such as: recipe making, feature implementing, etc. Please contact me: voltiksrc@gmail.com
+
 
 # Lath
-Lath is a independent package manager written in C++,
+Lath is a independent package manager written mostly in c++,
 it uses commands such as "get" and "rm" instead of install and remove.
+
 
 # status
 Lath is in early development.
