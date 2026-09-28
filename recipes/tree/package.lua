@@ -5,5 +5,9 @@ pkg = {
 
   build = function()
     os.execute("make -j$(nproc)")
+  end,
+
+  install = function()
+    os.execute("make install")
   end
 }
