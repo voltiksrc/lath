@@ -13,6 +13,7 @@ using std::string;
 bool install_staged_files(const string &install_dir, const string &root_dir) {
   for (const auto &entry : std::filesystem::recursive_directory_iterator(install_dir)) {
       auto relative_path = entry.path().lexically_relative(install_dir);
+      // FILESYSTEM LIBRARY IS HELL
       std::filesystem::path destination = root_dir / relative_path;
       std::filesystem::create_directories(destination.parent_path());
       if (entry.is_symlink()) {
@@ -98,8 +99,8 @@ void install_package(const string &recipe_path) {
       std::cerr<<"Failed to install package files.\n";
       return;
   }
-  std::filesystem::create_directories(".cache/db/packages/");
-  string package_db_dir = ".cache/db/packages/" + pkg.name;
+  std::filesystem::create_directories("/var/lib/lath/packages/");
+  string package_db_dir = "/var/lib/lath/packages/" + pkg.name;
   std::filesystem::create_directories(package_db_dir);
 
   std::ofstream file(package_db_dir + "/version");
@@ -125,7 +126,7 @@ void install_package(const string &recipe_path) {
 void remove_package(std::string package) {
   std::cout << "Removing " << package << "..." << '\n';
   string line;
-  string package_db_dir = ".cache/db/packages/" + package;
+  string package_db_dir = "/var/lib/lath/packages/" + package;
   std::ifstream file(package_db_dir + "/files");
   // check to see if package is installed
   if (!file) {
@@ -133,7 +134,9 @@ void remove_package(std::string package) {
       return;
   }
   while (std::getline(file, line)) {
-      std::filesystem::path target = ".cache/root" / std::filesystem::path(line.substr(1));
+      std::filesystem::path target =
+          ".cache/root" / std::filesystem::path(line.substr(1));
+
       std::filesystem::remove(target);
   }
   // fully remove pkg from db
