@@ -3,6 +3,7 @@ lath
 lathlua
 
 .cache/
+build/
 
 *.o
 *.zip
