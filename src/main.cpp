@@ -18,6 +18,7 @@ void show_help() {
   std::cout << "lath --help\n";
 }
 int main(int argc, char *argv[]) {
+  ensure_lath_dirs();
   if (argc < 2) {
     std::cout << "Please enter a command and 'optionally' a package.\n";
     return 1;

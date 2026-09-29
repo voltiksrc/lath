@@ -1,5 +1,6 @@
 #include "download.hpp"
 #include <curl/curl.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -36,7 +37,8 @@ std::string download_source(const string &source_url, const string &name,
     std::cerr << "Failed to initalize curl\n";
     return "";
   }
-
+  // create .cache before opening it
+  std::filesystem::create_directories(".cache");
   std::ofstream file(output_path, std::ios::binary);
   if (!file) {
     std::cerr << "Failed to open output file\n";
