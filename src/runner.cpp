@@ -5,7 +5,8 @@
 #include <string>
 
 using std::string;
-
+// This is main lua embed file for recipe loading.
+// lua embedding lowk easy ngl
 bool run_install(const std::string &recipe_path, const std::string &build_dir,
                  const std::string &install_dir) {
   auto original = std::filesystem::current_path();
