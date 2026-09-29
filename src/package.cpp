@@ -1,8 +1,9 @@
 #include "package.hpp"
 #include "archive.hpp"
-#include "build.hpp"
 #include "download.hpp"
 #include "recipe.hpp"
+#include "runner.hpp"
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -24,9 +25,12 @@ void install_package(const string &recipe_path) {
   extract_source(archive_path);
 
   string build_dir = ".cache/build/" + pkg.name + "-" + pkg.version;
+  string install_dir = ".cache/pkg/" + pkg.name + "-" + pkg.version;
+  std::filesystem::create_directories(install_dir);
   std::cout << "Building " << pkg.name << " " << pkg.version << "...\n";
   run_build(recipe_path, build_dir);
   std::cout << "Build complete.\n";
+  run_install(recipe_path, build_dir, install_dir);
 }
 
 void remove_package(std::string package) {
