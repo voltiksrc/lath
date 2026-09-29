@@ -8,7 +8,7 @@ pkg = {
     os.execute("make -j$(nproc)")
   end,
 
-  install = function()
-    os.execute("make install")
+  install = function(destdir)
+    os.execute("make install DESTDIR=" .. destdir)
   end
 }

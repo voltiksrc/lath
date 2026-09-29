@@ -6,7 +6,7 @@
 
 using std::string;
 
-void run_install(const std::string &recipe_path, const std::string &build_dir,
+bool run_install(const std::string &recipe_path, const std::string &build_dir,
                  const std::string &install_dir) {
   auto original = std::filesystem::current_path();
   auto absolute_recipe = std::filesystem::absolute(recipe_path);
@@ -16,7 +16,7 @@ void run_install(const std::string &recipe_path, const std::string &build_dir,
   if (!L) {
     std::cerr << "Failed to create lua state\n";
     std::filesystem::current_path(original);
-    return;
+    return false;
   }
   luaL_openlibs(L);
   int result = luaL_dofile(L, absolute_recipe.c_str());
@@ -24,7 +24,7 @@ void run_install(const std::string &recipe_path, const std::string &build_dir,
     std::cerr << "Lua error: " << lua_tostring(L, -1) << '\n';
     std::filesystem::current_path(original);
     lua_close(L);
-    return;
+    return false;
   }
   lua_getglobal(L, "pkg");
   lua_getfield(L, -1, "install");
@@ -34,10 +34,11 @@ void run_install(const std::string &recipe_path, const std::string &build_dir,
     std::cerr << "Lua error: " << lua_tostring(L, -1) << '\n';
     std::filesystem::current_path(original);
     lua_close(L);
-    return;
+    return false;
   }
   lua_close(L);
   std::filesystem::current_path(original);
+  return true;
 }
 
 void run_build(const std::string &recipe_path, const std::string &build_dir) {
