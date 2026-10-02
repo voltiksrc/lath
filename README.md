@@ -9,4 +9,4 @@ it uses commands such as "get" and "rm" instead of install and remove.
 
 
 # status
-Lath is in early development.
+Lath is decently far into development.
